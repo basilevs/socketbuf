@@ -26,7 +26,8 @@ socketwrapper::socketwrapper(int socket, bool own):
 {}
 
 socketwrapper::~socketwrapper() {
-	assert(_socket!=-1);
+	if (_socket < 0)
+		return;
 	if (!_own)
 		return;
 	shutdown(_socket, SHUT_RDWR);
@@ -74,6 +75,16 @@ socketwrapper * socketwrapper::connect(const Host & host, int port) {
 	return new socketwrapper(_socket, true);
 }
 
+void socketwrapper::disconnect() {
+	if (_socket < 0)
+		return;
+	close(_socket);
+	_socket=-1;
+	_own=false;
+}
+bool socketwrapper::isConnected() const { 
+	return _socket > 0;
+}
 
 static void throwErrno() {
 	switch(errno) {

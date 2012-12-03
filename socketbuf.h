@@ -43,10 +43,13 @@ private:
 	bool _own;
 public:
 	int socket() {return _socket;}
+	void disconnect();
+	bool isConnected() const;
 	unsigned read(char * oBuffer, unsigned length);
 	unsigned write(const char * iBuffer, unsigned length);
 	virtual unsigned recv(char * oBuffer, unsigned length);
 	virtual unsigned send(const char * iBuffer, unsigned length);
+	
 public:
 	class CodeError: public ISocketWrapper::Error {
 		int _code;
