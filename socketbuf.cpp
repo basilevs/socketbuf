@@ -78,6 +78,7 @@ socketwrapper * socketwrapper::connect(const Host & host, int port) {
 void socketwrapper::disconnect() {
 	if (_socket < 0)
 		return;
+	shutdown(_socket, SHUT_RDWR);
 	close(_socket);
 	_socket=-1;
 	_own=false;
