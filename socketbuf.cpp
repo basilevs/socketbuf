@@ -159,12 +159,40 @@ unsigned socketwrapper::send(const char * iBuffer, unsigned length) {
 
 typedef socketbuf::int_type int_type;
 
+void socketbuf::setBuffer() {
+	this->setg(_iBuffer, _iBuffer+BUFFER_SIZE, _iBuffer+BUFFER_SIZE);
+	this->setp(_oBuffer, _oBuffer+BUFFER_SIZE-1);
+}
+
+socketbuf::~socketbuf() {
+	setSocket(0);
+}
+
+void socketbuf::setSocket(ISocketWrapper * socket, bool doOwn) {
+	pubsync();
+	if (_doOwn) {
+		delete _socket;
+	}
+	_socket = socket;
+	_doOwn = doOwn;
+	if  (socket == 0) {
+		this->setg(0, 0, 0);
+		this->setp(0, 0);
+		_doOwn = 0;
+	} else {
+		setBuffer();
+	}
+}
+
+
 int_type socketbuf::writeChars(size_t toWriteCount)
 {
+	if (_socket == 0)
+		return traits_type::eof();
     assert(toWriteCount <= size_t(BUFFER_SIZE));
     assert(toWriteCount>0);
 //    cerr << "Writing " << toWriteCount << " bytes " << endl;
-    int byteCount = writeSome(_socket, _oBuffer, 1, toWriteCount * sizeof (char_type));
+    int byteCount = writeSome(*_socket, _oBuffer, 1, toWriteCount * sizeof (char_type));
 //    cerr << "Wrote " << byteCount << " bytes " << endl;
     if(byteCount <= 0) {
     	cerr << "Connection closed" << endl;
@@ -190,6 +218,8 @@ int_type socketbuf::overflow(int_type c)
 
 int_type socketbuf::underflow()
 {
+	if (_socket == 0)
+		return traits_type::eof();	
     char_type *begin = this->eback(), * current = this->gptr(), *end = this->egptr();
     assert(begin==_iBuffer);
     assert(end<=_iBuffer+BUFFER_SIZE);
@@ -199,7 +229,7 @@ int_type socketbuf::underflow()
     int length = end - current;
     memmove(_iBuffer, current, length);
     this->setg(_iBuffer, _iBuffer, _iBuffer + length);
-    int ready = readSome(_socket, _iBuffer + length, 1, (BUFFER_SIZE - length) * sizeof (char_type));
+    int ready = readSome(*_socket, _iBuffer + length, 1, (BUFFER_SIZE - length) * sizeof (char_type));
     if(ready <= 0)
         return traits_type::eof();
     length += ready;

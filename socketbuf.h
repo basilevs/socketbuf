@@ -4,6 +4,7 @@
 #include <streambuf>
 #include <assert.h>
 #include <stdexcept>
+#include <memory>
 
 
 class ISocketWrapper {
@@ -82,13 +83,21 @@ public:
 	typedef Parent::traits_type traits_type;
 private:
 	char_type _iBuffer[BUFFER_SIZE], _oBuffer[BUFFER_SIZE];
-	ISocketWrapper & _socket;
+	ISocketWrapper * _socket;
+	bool _doOwn;
+	void setBuffer();
 public:
-	socketbuf(ISocketWrapper & socket): _socket(socket) {
-		this->setg(_iBuffer, _iBuffer+BUFFER_SIZE, _iBuffer+BUFFER_SIZE);
-		this->setp(_oBuffer, _oBuffer+BUFFER_SIZE-1);
-	}
-	virtual ~socketbuf() {}
+	socketbuf(ISocketWrapper & socket):
+		_doOwn(false)
+	{ setSocket(&socket, false);}
+	socketbuf():
+		_doOwn(false)
+	{setSocket(0);}
+	
+	// id doOwn is true, the socket ownership is captured
+	void setSocket(ISocketWrapper * socket, bool doOwn = false);
+	ISocketWrapper * socket() {return _socket;}
+	virtual ~socketbuf();
 
 private:
 
@@ -109,10 +118,5 @@ private:
 		}
 	}
 };
-
-
-
-
-
 
 #endif /* SOCKETBUF_H_ */
