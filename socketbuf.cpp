@@ -282,6 +282,17 @@ unsigned readSome(ISocketWrapper & socket, char *buffer, unsigned min_length, un
 	return socket.read(buffer, min_length);
 }
 
+int socketbuf::sync() {
+	if (_socket == 0)
+		return -1;
+	int length=this->pptr() - _oBuffer;
+	assert(length <= BUFFER_SIZE);
+	if (length>0) {
+		return writeChars(length)==traits_type::eof() ? -1 : 0;
+	} else {
+		return 0;
+	}
+}
 
 
 

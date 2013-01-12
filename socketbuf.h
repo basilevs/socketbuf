@@ -88,11 +88,13 @@ private:
 	void setBuffer();
 public:
 	socketbuf(ISocketWrapper & socket):
+		_socket(0),
 		_doOwn(false)
-	{ setSocket(&socket, false);}
+	{setBuffer(); setSocket(&socket, false);}
 	socketbuf():
+		_socket(0),
 		_doOwn(false)
-	{setSocket(0);}
+	{setBuffer(); setSocket(0);}
 	
 	// id doOwn is true, the socket ownership is captured
 	void setSocket(ISocketWrapper * socket, bool doOwn = false);
@@ -108,15 +110,7 @@ private:
 	int_type writeChars(size_t toWriteCount);
 
 	int_type overflow(int_type c);
-	int sync() {
-		int length=this->pptr() - _oBuffer;
-		assert(length <= BUFFER_SIZE);
-		if (length>0) {
-			return writeChars(length)==traits_type::eof() ? -1 : 0;
-		} else {
-			return 0;
-		}
-	}
+	int sync();
 };
 
 #endif /* SOCKETBUF_H_ */
